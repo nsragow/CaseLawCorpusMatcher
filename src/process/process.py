@@ -47,28 +47,62 @@ def spacify(text):
     return filtered_sent
 
 class StateCorpus:
+    '''
+    Case law file handler / model container.
+    Use with the data.jsonl from https://case.law/bulk/download/
+
+    Example
+        corp = StateCorpus("/Users/user/path/to/data/Arkansas/data/data.jsonl",100)
+        corp.build_nn() # Create model
+        text = corp._raw_get_(200) # grabbing a single jsonl line at index 200
+        ret = corp.predict(text)
+        print(ret[0]) # Cleaned text to predict on. Useful for sanity check
+        rank = 0 # most near neighbor
+        print(ret[1][rank]) # clean corpus of most near neighbor
+    '''
     def build_dictionary(self):
+        '''
+        Initiates a dictionary and CountVectorizer for all words in the .jsonl file.
+        '''
         if self.dictionary is None:
             self.dictionary = set()
             self.spacied_map(lambda spac : add_to_set(spac,self.dictionary))
             self.vectorizer = CountVectorizer(vocabulary=list(self.dictionary),input="content")
-    def bag_of_words(self):
 
+    def bag_of_words(self):
+        '''
+        Returns Bag of Words for each passage
+        '''
         self.build_dictionary()
 
         return vstack(self.spacied_map(lambda words : self.vectorizer.transform([" ".join(words)])))
     def build_nn(self):
+        '''
+        Initiates NearestNeighbors model
+        '''
         if self.nn is None:
             self.build_dictionary()
             self.nn = NearestNeighbors(n_neighbors=5, n_jobs=-1)
             self.nn.fit(self.bag_of_words())
     def predict(self,unclean_text, count=3):
+        '''
+        Using NearestNeighbors model, returns the top most similar texts to unclean_text
+
+        Parameters
+        ----------
+            unclean_text : str
+                    Single line in .jsonl file. Predict will clean and extract the appropriate
+                    text.
+            count : int
+                The number of desired nearest neighbors. Should not be larger
+                than the number of texts in the model.
+        '''
         clean_text = get_decision(json.loads(unclean_text))
 
         vectorized = self.vectorizer.transform([" ".join(spacify(clean_text))])
 
         nearest_neighbors_index = self.nn.kneighbors(vectorized,n_neighbors=count,return_distance=True)[1][0]
-        
+
         nearest_neighbors = [self.text(index) for index in nearest_neighbors_index]
 
         return (clean_text,nearest_neighbors)
@@ -76,11 +110,31 @@ class StateCorpus:
 
 
     def __init__(self,filename,filelimit = -1):
+        '''
+        Constructor
+
+        Parameters
+        ----------
+            filename : str
+                Path to jsonl file downloaded of case.law
+            filelimit : int
+                Maximum amount of lines to be read from the jsonl. When -1 all
+                lines will be read.
+        '''
         self.nn = None
         self.dictionary = None
         self.filename = filename
         self._init_lines_(filelimit)
     def _init_lines_(self,filelimit):
+        '''
+        Counts the amount of lines in the jsonl
+        or uses the filelimit.
+
+        Parameters
+        ----------
+            filelimit : int
+                See Constructor
+        '''
         self.line_count = 0
         with open(self.filename,"r") as fp:
             for i, line in enumerate(fp):
@@ -88,6 +142,18 @@ class StateCorpus:
         if filelimit > 0:
             self.line_count = min(self.line_count,filelimit)
     def _map_line_(self,function):
+        '''
+        Applies a function to every line (as a str) in the jsonl.
+        Similar to pandas.DataFrame.map(axis=1)
+
+        Parameters
+        ----------
+            function : function
+                The function to be applied to each line
+        Returns
+        -------
+            List of the return values of the function in order of lines
+        '''
         returns = list()
         with open(self.filename,"r") as fp:
             for i, line in enumerate(fp):
@@ -98,30 +164,67 @@ class StateCorpus:
                 returns.append(function(line))
         return returns
     def map(self,function):
+        '''
+        See _map_line_.
+
+        Instead of mapping to the raw text, maps to the json of the raw text.
+        '''
 
         new_func = lambda raw : function(json.loads(raw))
         return self._map_line_(new_func)
     def text_map(self,function):
+        '''
+        See _map_line_.
+
+        Instead of mapping to the raw text, maps to the text of the case.
+        '''
+
         new_func = lambda raw : function(get_decision(raw))
         return self.map(new_func)
     def _raw_get_(self,index):
+        '''
+        Get line as str from jsonl
 
+        Parameters
+        ----------
+            index : int
+                The index of the line starting at 0
+        '''
         with open(self.filename,"r") as fp:
             for i, line in enumerate(fp):
                 if i == index:
                     return line
                     break
     def get(self,index):
+        '''
+        Get the python dict from json.loads of the line at the index.
+
+        Parameters
+        ----------
+            index : int
+                see _raw_get_
+        '''
         with open(self.filename,"r") as fp:
             for i, line in enumerate(fp):
                 if i == index:
                     return json.loads(line)
                     break
     def text(self,index):
+        '''
+        Gets the corpus from the line at index.
+
+        see get().
+        '''
         return get_decision(self.get(index))
     def spacied(self,index):
         return spacify(self.text(index))
     def spacied_map(self,function):
+        '''
+        See _map_line_.
+
+        Instead of mapping to the raw text, maps to the corpus after the spacy function is applied.
+        '''
+
         new_func = lambda text : function(spacify(text))
         return self.text_map(new_func)
     def __iter__(self):
