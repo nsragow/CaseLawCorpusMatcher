@@ -10,6 +10,14 @@ from sklearn.neighbors import NearestNeighbors
 
 nlp = English()
 
+
+def write_new_mexico_to_file(json,appendable):
+
+    for entry in json["casebody"]["data"]["opinions"]:
+        if entry["type"] == "majority":
+            appendable.write(entry["text"].replace("\n"," ").lower()+"\n")
+            break
+
 def get_by_index(filename,index):
     with open(filename,"r") as fp:
         for i, line in enumerate(fp):
@@ -23,6 +31,7 @@ def add_to_set(word_list,word_set):
             word_set.add(word.lower())
         else:
             raise Exception("Expected String got "+word+ " of type " + str(type(word)))
+
 
 
 def get_decision(json):
@@ -49,7 +58,7 @@ def spacify(text):
 class StateCorpus:
     '''
     Case law file handler / model container.
-    Use with the data.jsonl from https://case.law/bulk/download/
+    Use with the data.jsonl (Arkansas) from https://case.law/bulk/download/
 
     Example
         corp = StateCorpus("/Users/user/path/to/data/Arkansas/data/data.jsonl",100)
