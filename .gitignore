@@ -1,3 +1,4 @@
 Pickles/
 *pycache*
 /Data
+*.ipynb
