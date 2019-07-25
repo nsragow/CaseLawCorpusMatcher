@@ -10,7 +10,7 @@ from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from gensim.test.utils import get_tmpfile
 
 def read_corpus(fname, tokens_only=False):
-    with smart_open.smart_open(fname, encoding="iso-8859-1") as f:
+    with smart_open.open(fname, encoding="iso-8859-1") as f:
         for i, line in enumerate(f):
             if (i % 100) == 0:
                 print(f"proc {i}                           ",end="\r")
@@ -21,12 +21,15 @@ def read_corpus(fname, tokens_only=False):
                 yield gensim.models.doc2vec.TaggedDocument(gensim.utils.simple_preprocess(line), [i])
 
 def prep_model(model, path_to_data):
-    print("Reading data...                      " end="\r")
+    print("Reading data...                      ", end="\r")
     train_corpus = list(read_corpus(path_to_data))
-    print("Building Vocab...                      " end="\r")
+    print("Building Vocab...                      ", end="\r")
     model.build_vocab(train_corpus)
-    print("                                       " end="\r")
+    print("                                       ", end="\r")
+    return train_corpus
 
+def train(model,data):
+    model.train(data, total_examples=model.corpus_count, epochs=1)
 
 def evaluate(model):
     ranks = []
@@ -43,6 +46,6 @@ def evaluate(model):
         second_ranks.append(sims[1])
 
 
-        print("                                       " end="\r")
+        print("                                       ", end="\r")
 
     print(collections.Counter(ranks))

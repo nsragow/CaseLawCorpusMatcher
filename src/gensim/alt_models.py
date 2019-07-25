@@ -6,19 +6,19 @@ min_count = 10
 max_vocab_size = None
 #DBOW
 def dbow():
-    return Doc2Vec(max_vocab_size = max_vocab_size,dm=0, size=100, negative=5, min_count=min_count, workers=cores, alpha=0.065, min_alpha=0.065)
+    return Doc2Vec(hs = 0,max_vocab_size = max_vocab_size,dm=0, vector_size=300, negative=5, min_count=min_count, workers=cores, alpha=0.065, min_alpha=0.065)
 #model_ug_dbow = dbow()
 
 
 #DMC
 def dmc():
-    return Doc2Vec(max_vocab_size = max_vocab_size,dm=1, dm_concat=1, size=100, window=2, negative=5, min_count=min_count, workers=cores, alpha=0.065, min_alpha=0.065)
+    return Doc2Vec(hs = 0,max_vocab_size = max_vocab_size,dm=1, dm_concat=1, vector_size=300, window=2, negative=5, min_count=min_count, workers=cores, alpha=0.065, min_alpha=0.065)
 #model_ug_dmc = dmc()
 
 
 #DMM
 def dmm():
-    return Doc2Vec(max_vocab_size = max_vocab_size,dm=1, dm_mean=1, size=100, window=4, negative=5, min_count=min_count, workers=cores, alpha=0.065, min_alpha=0.065)
+    return Doc2Vec(hs = 0,max_vocab_size = max_vocab_size,dm=1, dm_mean=1, vector_size=300, window=4, negative=5, min_count=min_count, workers=cores, alpha=0.065, min_alpha=0.065)
 #model_ug_dmm = dmm()
 '''
 #Combined 1 DBOW + DMC
