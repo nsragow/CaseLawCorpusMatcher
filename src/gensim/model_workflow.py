@@ -28,10 +28,10 @@ def prep_model(model, path_to_data):
     print("                                       ", end="\r")
     return train_corpus
 
-def train(model,data):
-    model.train(data, total_examples=model.corpus_count, epochs=1)
+def train(model,data,epochs = 1):
+    model.train(data, total_examples=model.corpus_count, epochs=epochs)
 
-def evaluate(model):
+def evaluate(model,train_corpus):
     ranks = []
     second_ranks = []
     total_docs = len(train_corpus)
